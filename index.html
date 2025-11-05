@@ -1,0 +1,305 @@
+<html>
+<head>
+  <title>Language Learning (Advanced)</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial;
+      background: linear-gradient(160deg, #f0f0f5, #dbe6f6);
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    .difficulty {
+	  display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: white;
+	  font-size: 18px;
+	  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+	  border-radius: 10px;
+	  padding: 30px 80px;
+	  height: fit-content;
+	  gap: -5px;
+    }
+
+    .difficulty h3 {
+      margin-bottom: 25px;
+	  margin-top: 5px;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .word-box {
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 30px;
+      width: 250px;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+
+    #progress { 
+      font-size: 20px;
+      margin-top: 5px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    #answer {
+      width: 260px;
+	  padding: 10px;
+      font-size: 15px;
+      border: none;
+      text-align: center;
+      outline: none;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    #answer:focus {
+      border-color: #007BFF;
+      box-shadow: 0 0 5px rgba(0,123,255,0.5);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      margin-bottom: 20px;
+      margin-top: 20px;
+      font-size: 20px;
+    }
+
+    .correct { color: green; font-weight: bold; }
+    .wrong { color: red; font-weight: bold; }
+
+    #feedback {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 25px;
+      left: 50%;
+      width: 350px;
+      max-width: 90%;
+	  height: auto;
+      transform: translateX(-50%);
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+
+    #restart {
+      margin-top: 15px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    #restart:hover {
+      background-color: #0056b3;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        flex-direction: column;
+        align-items: center;
+      }
+      .difficulty {
+        margin-right: 0;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="difficulty">
+    <h3>Рівень складності</h3>
+    <label><input type="radio" name="level" value="easy" checked> Початковий</label><br>
+    <label><input type="radio" name="level" value="medium"> Середній</label><br>
+    <label><input type="radio" name="level" value="hard"> Високий</label><br><br>
+    <button id="startBtn">Почати тест</button>
+  </div>
+
+  <div class="main" id="quizSection" style="display:none;">
+    <div id="word" class="word-box">...</div>
+    <div id="progress">1/10</div>
+
+    <input type="text" id="answer" placeholder="Введіть переклад...">
+    <div id="feedback"></div>
+
+    <div class="buttons">
+      <button id="checkBtn">Перевірити</button>
+      <button id="nextBtn" disabled>Далі</button>
+    </div>
+
+    <div class="stats">
+      <span class="correct">Вірно: <span id="correct">0</span></span> |
+      <span class="wrong">Невірно: <span id="wrong">0</span></span>
+    </div>
+  </div>
+
+  <div class="modal" id="resultModal">
+    <h2>Рівень знань</h2>
+    <p id="levelText"></p>
+    <button id="restart">Почати знову</button>
+  </div>
+
+  <script>
+  $(function(){
+    const wordsByLevel = {
+      easy: [
+        {en: "apple", ua: "яблуко"},
+        {en: "sun", ua: "сонце"},
+        {en: "always", ua: "завжди"},
+        {en: "school", ua: "школа"},
+        {en: "dog", ua: "собака"},
+        {en: "cat", ua: "кіт"},
+        {en: "book", ua: "книга"},
+        {en: "home", ua: "дім"},
+        {en: "water", ua: "вода"},
+        {en: "friend", ua: "друг"}
+      ],
+      medium: [
+        {en: "journey", ua: "подорож"},
+        {en: "improve", ua: "покращувати"},
+        {en: "important", ua: "важливий"},
+        {en: "decide", ua: "вирішувати"},
+        {en: "describe", ua: "описувати"},
+        {en: "prepare", ua: "готуватися"},
+        {en: "believe", ua: "вірити"},
+        {en: "experience", ua: "досвід"},
+        {en: "success", ua: "успіх"},
+        {en: "opportunity", ua: "можливість"}
+      ],
+      hard: [
+        {en: "immortality", ua: "безсмертя"},
+        {en: "antagonist", ua: "антагоніст"},
+        {en: "potion", ua: "зілля"},
+        {en: "horcrux", ua: "крестраж"},
+        {en: "soul", ua: "душа"},
+        {en: "murder", ua: "вбивство"},
+        {en: "destiny", ua: "доля"},
+        {en: "oblivion", ua: "забуття"},
+        {en: "serenity", ua: "спокій"},
+        {en: "wisdom", ua: "мудрість"}
+      ]
+    };
+
+    let shuffled = [];
+    let current = 0, correct = 0, wrong = 0;
+    let checked = false;
+    $("#answer").on("input", function() {
+      this.value = this.value.replace(/[0-9]/g, '');
+    });
+
+    $("#startBtn").on("click", function(){
+      const level = $("input[name='level']:checked").val();
+      shuffled = wordsByLevel[level].sort(() => Math.random() - 0.5);
+      $(".difficulty").hide();
+      $("#quizSection").fadeIn();
+      showWord();
+    });
+
+    function showWord() {
+      $("#word").text(shuffled[current].en);
+      $("#answer").val("").prop("disabled", false);
+      $("#progress").text((current+1) + "/" + shuffled.length);
+      $("#feedback").text("");
+      $("#checkBtn").prop("disabled", false);
+      $("#nextBtn").prop("disabled", true);
+      checked = false;
+    }
+
+    $("#checkBtn").on("click", function(){
+      let userAnswer = $("#answer").val().trim().toLowerCase();
+      if (!userAnswer) return alert("Введіть переклад!");
+      if (checked) return;
+
+      if (userAnswer === shuffled[current].ua) {
+        correct++;
+        $("#feedback").html("Вірно!").css("color", "green");
+      } else {
+        wrong++;
+        $("#feedback").html("Невірно! Правильна відповідь: " + shuffled[current].ua).css("color", "red");
+      }
+
+      $("#correct").text(correct);
+      $("#wrong").text(wrong);
+      checked = true;
+      $("#checkBtn").prop("disabled", true);
+      $("#nextBtn").prop("disabled", false);
+	  $("#answer").prop("disabled", true);
+    });
+
+    $("#nextBtn").on("click", function(){
+      nextWord();
+    });
+
+    function nextWord() {
+      current++;
+      if (current < shuffled.length) showWord();
+      else showResult();
+    }
+
+    function showResult() {
+      let percent = (correct / shuffled.length) * 100;
+      let level = percent >= 80 ? "Відмінно!" : percent >= 50 ? "Добре, але потрібно ще практикувати." : "Потрібно повторити слова.";
+      $("#levelText").text(level);
+      $("#resultModal").fadeIn();
+    }
+
+    $("#restart").on("click", function(){
+      $(".difficulty").fadeIn();
+      $("#quizSection").hide();
+      $("#resultModal").fadeOut();
+      current = correct = wrong = 0;
+      $("#correct, #wrong").text(0);
+      $("#feedback").text("");
+    });
+  });
+  </script>
+</body>
+</html>
